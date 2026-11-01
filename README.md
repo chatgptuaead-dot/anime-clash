@@ -2,7 +2,9 @@
 
 A pixel-art 1v1 fighting game with 10 anime fighters, each with 5 moves. It runs in the browser from a single file with no build step and no dependencies.
 
-Play it by opening `index.html` in a browser, then click the game once so it receives key presses.
+**Play online: https://chatgptuaead-dot.github.io/anime-clash/**
+
+You can also open `index.html` in a browser. Either way, click the game once so it receives key presses.
 
 ## Modes
 
