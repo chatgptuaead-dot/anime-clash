@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Anime Clash</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -15,6 +20,8 @@ body{background:var(--bg);color:var(--fg);margin:0;display:flex;flex-direction:c
 .keys b{color:var(--fg);font-weight:600}
 .keys .a{color:var(--p1)} .keys .b{color:var(--p2)}
 </style>
+</head>
+<body>
 <canvas id="game" width="320" height="180" tabindex="0" aria-label="Anime Clash fighting game"></canvas>
 <div class="keys">
   <span><span class="a">P1</span> <b>WASD</b> move/jump · <b>1 2 3 4 5</b> attacks</span>
@@ -950,3 +957,5 @@ cv.focus();
 requestAnimationFrame(loop);
 })();
 </script>
+</body>
+</html>
