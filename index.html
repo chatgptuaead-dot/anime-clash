@@ -20,8 +20,9 @@ body{background:var(--bg);color:var(--fg);margin:0;display:flex;flex-direction:c
 .keys b{color:var(--fg);font-weight:600}
 .keys .a{color:var(--p1)} .keys .b{color:var(--p2)}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;overscroll-behavior:none}
+body{touch-action:manipulation;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
 #game{touch-action:none}
 /* touch controls: stick + 5 attack buttons per player, sized to the shorter screen side */
 #touch{--b:clamp(46px,8.5vmin,72px);--stick:clamp(104px,20vmin,160px);width:100%;max-width:1280px;display:flex;align-items:center;justify-content:space-between;gap:12px;
@@ -82,6 +83,35 @@ body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .orow{display:flex;gap:.8em;flex-wrap:wrap;justify-content:center}
 @media (max-width:640px){.ocols{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.opulse{animation:none}}
+/* phones held sideways: controls float over the game so the screen can use the full height */
+@media (orientation:landscape) and (max-height:520px){
+  body{padding-block:0}
+  #touch{position:fixed;inset:0;max-width:none;z-index:5;pointer-events:none;align-items:flex-end;--b:42px;--stick:112px;
+    padding:8px max(14px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));box-sizing:border-box}
+  #touch .stick,#touch button{pointer-events:auto}
+  #touch .stick{opacity:.7}
+  #touch .btns button{opacity:.75}
+  #touch .mid{flex-direction:row;align-self:flex-end}
+  #touch .menu{align-self:flex-end;padding-bottom:4px}
+  #touch.duo{--b:34px;--stick:92px}
+  .btns{gap:6px}
+}
+/* phones held upright: a tighter layout under the game, pause and mute on their own row */
+@media (orientation:portrait) and (max-width:520px){
+  #touch{--b:50px;--stick:120px;flex-wrap:wrap;gap:10px}
+  #touch.solo .mid{order:-1;flex-basis:100%;flex-direction:row;justify-content:center}
+  #touch.duo .mid{flex-basis:100%;flex-direction:row;justify-content:center}
+  #touch.duo .pad{flex-basis:100%;justify-content:space-between}
+  .btns{gap:6px}
+  .menu{flex-wrap:wrap;gap:10px}
+}
+/* the online menu gets the whole screen on small displays */
+@media (max-width:700px),(max-height:520px){
+  #online{position:fixed;inset:0;z-index:20;font-size:14px;align-items:flex-start;
+    padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .ocard{width:100%}
+  #olist{max-height:none}
+}
 </style>
 </head>
 <body>
@@ -148,7 +178,8 @@ body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 const W=320,H=180,GROUND=160,GRAV=0.35;
 const cv=document.getElementById('game'),ctx=cv.getContext('2d');
 let touchUI=false;
-function fit(){const res=touchUI?(innerHeight>innerWidth?innerHeight*.42:Math.min(240,Math.max(130,innerHeight*.3))):70;const s=Math.min((innerWidth-32)/W,(innerHeight-res-16)/H);const k=!touchUI&&s>=2?Math.floor(s):Math.max(.5,s);cv.style.width=W*k+'px';cv.style.height=H*k+'px';const sc=document.getElementById('screen');if(sc)sc.style.width=(W*k+6)+'px';}
+const phoneSideways=()=>matchMedia('(orientation: landscape) and (max-height: 520px)').matches;
+function fit(){const res=touchUI?(phoneSideways()?-10:innerHeight>innerWidth?innerHeight*.42:Math.min(240,Math.max(130,innerHeight*.3))):70;const s=Math.min((innerWidth-32)/W,(innerHeight-res-16)/H);const k=!touchUI&&s>=2?Math.floor(s):Math.max(.5,s);cv.style.width=W*k+'px';cv.style.height=H*k+'px';const sc=document.getElementById('screen');if(sc)sc.style.width=(W*k+6)+'px';}
 addEventListener('resize',fit);fit();
 
 /* ---------- 3x5 pixel font ---------- */
@@ -1305,7 +1336,7 @@ function drawTitle(){
   text('ANIME',160,18,'#ff4a4a',6,'center','#3a0a0a');
   text('CLASH',160,52,'#ffe84a',6,'center','#5a3a00');
   text('PIXEL BRAWL OF THE ANIME WORLDS',160,86,'#ffffff',1,'center');
-  if(touchUI){if(G.t%40<28)text('CHOOSE A MODE BELOW',160,110,'#ffffff',2,'center');}
+  if(touchUI){if(G.t%40<28)text('CHOOSE A MODE BELOW',160,110,'#ffffff',2,'center');if(innerHeight>innerWidth&&innerWidth<600)text('TIP: TURN YOUR PHONE SIDEWAYS FOR A BIGGER SCREEN',160,128,'#8ae08a',1,'center');}
   else{if(G.t%40<28){text('PRESS 1 - VS CPU',160,98,'#ffffff',2,'center');}
   text('PRESS 2 - 2 PLAYERS',160,112,'#c8c0f0',2,'center');text('PRESS 3 - ONLINE',160,126,'#8ae08a',2,'center');}
   text(touchUI?'STICK: MOVE AND JUMP     BUTTONS: ATTACK':'P1: WASD + 1 2 3 4 5     P2: ARROWS + 6 7 8 9 0',160,146,'#8f88b8',1,'center');

@@ -34,9 +34,11 @@ Matches are best of 3 rounds with a 99-second timer.
 - **No teleport spamming:** if Goku's Instant Transmission or Ichigo's Flash Step hits 4 times in a row, it locks. Use a different move or wait 5 seconds to unlock it. Misses and blocked attacks don't count. The locked move and its countdown show under your health bar.
 - `P` pauses and shows both move lists, `M` mutes and `Esc` goes back.
 
-### iPad and touch screens
+### Phones, iPad and touch screens
 
 On a touch screen the game shows on-screen controls: a stick on the left to move (push up to jump) and five numbered attack buttons on the right, matching the keyboard numbers. Tap **VS CPU** or **2 PLAYERS** on the title screen, and button **1** to lock in a fighter. **II** pauses or goes back. In 2-player mode each player gets their own stick and buttons.
+
+On a phone held sideways, the game fills the screen and the controls float over its bottom corners. Held upright, the controls sit under the game. Sideways gives the bigger picture.
 
 ## Online multiplayer
 
