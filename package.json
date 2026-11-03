@@ -1,0 +1,16 @@
+{
+  "name": "anime-clash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pixel-art anime fighting game with an online multiplayer relay server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "8.18.0"
+  }
+}
