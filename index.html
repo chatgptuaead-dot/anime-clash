@@ -43,6 +43,7 @@ body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .btns button.big{grid-column:span 3}
 .btns b{font-size:1em}.btns i{font-style:normal;font-size:.5em;letter-spacing:.06em;opacity:.9}
 .sig{background:#7a4ad0}.spc{background:#2a7ad8}.sup{background:#8a7a20}.lit{background:#5a5a78}.hvy{background:#c8302a}
+.btns button.locked{filter:grayscale(1) brightness(.55)}
 .sup.ready{background:#f2c21a;color:#1a1200!important;animation:glow .5s steps(2) infinite}
 @keyframes glow{50%{box-shadow:0 0 0 3px #fff6a0,0 0 18px #ffe84a}}
 .mid{display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -522,9 +523,9 @@ let projectiles=[],strikes=[],erupts=[],parts=[],hitstop=0,shake=0,superFreeze=n
 
 function makeFighter(ch,side){
   return{ch,side,x:side?220:100,y:GROUND,vx:0,vy:0,facing:side?-1:1,w:ch.w,h:ch.h,hp:ch.stats.hp,maxHp:ch.stats.hp,ghost:ch.stats.hp,meter:0,
-    state:'idle',t:0,mt:0,move:null,mi:-1,stun:0,flash:0,onGround:true,combo:0,comboT:0,showCombo:0,inv:0,hitDone:false,hitConnected:false,buffer:null,trail:[],guard:false,inp:EMPTY,ai:null};
+    state:'idle',t:0,mt:0,move:null,mi:-1,stun:0,flash:0,onGround:true,combo:0,comboT:0,showCombo:0,inv:0,hitDone:false,hitConnected:false,buffer:null,trail:[],guard:false,inp:EMPTY,ai:null,lastMi:-1,streak:0,lastUseT:-9999,lockMsg:0};
 }
-function resetFighter(f){f.x=f.side?220:100;f.y=GROUND;f.vx=f.vy=0;f.facing=f.side?-1:1;f.hp=f.ghost=f.maxHp;f.state='idle';f.move=null;f.stun=0;f.flash=0;f.onGround=true;f.combo=0;f.comboT=0;f.inv=0;f.buffer=null;f.trail=[];f.ai=null;}
+function resetFighter(f){f.x=f.side?220:100;f.y=GROUND;f.vx=f.vy=0;f.facing=f.side?-1:1;f.hp=f.ghost=f.maxHp;f.state='idle';f.move=null;f.stun=0;f.flash=0;f.onGround=true;f.combo=0;f.comboT=0;f.inv=0;f.buffer=null;f.trail=[];f.ai=null;f.lastMi=-1;f.streak=0;f.lastUseT=-9999;f.lockMsg=0;}
 
 const hurtBox=f=>({x:f.x-f.w/2,y:f.y-f.h,w:f.w,h:f.h});
 const ov=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
@@ -565,9 +566,15 @@ function ko(d,a,dir){
   if(G.phase==='play'){G.phase='ko';G.phaseT=0;slowmo=50;sfx('ko');whiteFlash=6;}
 }
 
+// The same move works 3 times in a row; after that the fighter must use a different move or wait 5 seconds.
+const MAX_REPEAT=3,REPEAT_RESET=300;
+const isMoveLocked=(f,i)=>f.lastMi===i&&f.streak>=MAX_REPEAT&&f.t-f.lastUseT<REPEAT_RESET;
 function startMove(f,i){
   const m=f.ch.moves[i];
-  if(m.super){if(f.meter<100)return false;f.meter=0;superFreeze={t:45,f,name:m.name};f.inv=m.st+12;sfx('super');}
+  if(isMoveLocked(f,i)){if(f.lockMsg<=0)sfx('block');f.lockMsg=45;return false;}
+  if(m.super&&f.meter<100)return false;
+  f.streak=f.lastMi===i&&f.t-f.lastUseT<REPEAT_RESET?f.streak+1:1;f.lastMi=i;f.lastUseT=f.t;
+  if(m.super){f.meter=0;superFreeze={t:45,f,name:m.name};f.inv=m.st+12;sfx('super');}
   f.state='attack';f.move=m;f.mi=i;f.mt=0;f.hitDone=false;f.hitConnected=false;f.trail=[];f.groupHit=false;
   if(f.onGround)f.vx=0;
   return true;
@@ -633,7 +640,7 @@ function threatened(o){
 }
 
 function updateFighter(f,o,inp){
-  f.inp=inp;f.t++;if(f.flash>0)f.flash--;if(f.inv>0)f.inv--;if(f.showCombo>0)f.showCombo--;
+  f.inp=inp;f.t++;if(f.flash>0)f.flash--;if(f.lockMsg>0)f.lockMsg--;if(f.inv>0)f.inv--;if(f.showCombo>0)f.showCombo--;
   if(f.buffer&&--f.buffer.t<=0)f.buffer=null;
   for(let i=0;i<5;i++)if(inp.atk[i]){f.buffer={i,t:8};break;}
   f.guard=false;
@@ -1004,6 +1011,7 @@ function drawFighter(f){
   if(superFreeze&&superFreeze.f===f){const fl=G.t%4<2;alpha(.5,()=>{pc(f.x,f.y-f.h/2,f.h/2+6+(fl?2:0),m&&m.color||'#ffe84a');});}
   if(f.inv>0&&f.state==='attack'&&f.move&&f.move.super&&G.t%2)drawSprite(f.ch,f.x,f.y,f.facing,P,{tint:'#ffffff',alpha:.6});
   drawSprite(f.ch,f.x,f.y,f.facing,P);
+  if(f.lockMsg>0)text('TRY ANOTHER MOVE',f.x,f.y-f.h-(f.ch.body==='human'?30:22),'#ffb07a',1,'center');
   if(!m)return;
   const mt=f.mt,act=mt>=m.st&&mt<m.st+m.ac,hp=handPos(f);
   if(m.handOrb&&mt<m.st+m.ac){const r=Math.min(5,1+mt/3)+(G.t%4<2?1:0);const y=m.type==='uppercut'?f.y-54:hp.y;const x=m.type==='uppercut'?f.x+f.facing*7:hp.x;
@@ -1086,6 +1094,8 @@ function drawHUD(){
     const mx=left?6:244,full=f.meter>=100;
     bar(mx,170,70,4,f.meter/100,full?(G.t%10<5?'#ffe84a':'#ffffff'):'#3ab0ff','#10203a',!left);
     text(full?'SUPER READY':'POWER',left?mx+74:mx-4,169,full?'#ffe84a':'#8f88b8',1,left?'left':'right');
+    if(isMoveLocked(f,f.lastMi)){const sec=Math.ceil((REPEAT_RESET-(f.t-f.lastUseT))/60),nm=f.ch.moves[f.lastMi].name;
+      text((nm.length>22?nm.slice(0,21)+'.':nm)+' LOCKED '+sec+'S',left?x:x+w,24,f.lockMsg>0&&G.t%6<3?'#ffffff':'#ff9a5a',1,left?'left':'right');}
     if(f.showCombo>0&&f.comboN>=2)text(f.comboN+' HITS',left?8:312,32,'#ffe84a',2,left?'left':'right');
   }
   ctx.fillStyle='#000';ctx.fillRect(147,3,26,16);ctx.fillStyle='#1a1630';ctx.fillRect(148,4,24,14);
@@ -1242,7 +1252,8 @@ function loop(ts){
 /* ---------- touch controls ---------- */
 const touchEl=document.getElementById('touch'),pads=[document.getElementById('pad1'),document.getElementById('pad2')],
   tmid=document.getElementById('tmid'),tmenu=document.getElementById('tmenu'),tquit=document.getElementById('tquit'),
-  supBtns=[...touchEl.querySelectorAll('.sup')];
+  supBtns=[...touchEl.querySelectorAll('.sup')],
+  padBtns=pads.map(p=>[...p.querySelectorAll('.btns button')]),PAD_MOVE=[3,2,4,0,1];
 function enableTouch(){if(touchUI)return;touchUI=true;touchEl.hidden=false;document.querySelector('.keys').hidden=true;tKey='';fit();}
 function unlockAudio(){initAudio();if(AC&&AC.state==='suspended')AC.resume();}
 function vPress(c){if(!keys[c])pressed[c]=true;keys[c]=true;}
@@ -1276,7 +1287,12 @@ function syncTouch(){
     touchEl.classList.toggle('solo',!title&&!duo);touchEl.classList.toggle('duo',duo);
     tquit.hidden=!(G.screen==='fight'&&G.paused);}
   if(G.mode==='online')tquit.hidden=!(G.screen==='fight'&&G.leaveAsk>0);
-  for(let i=0;i<2;i++)supBtns[i].classList.toggle('ready',G.screen==='fight'&&!!G.f[i]&&G.f[i].meter>=100);
+  const fight=G.screen==='fight';
+  for(let p=0;p<2;p++){
+    const f=!fight?null:G.mode==='online'?(p===0?G.f[NET.side]:null):G.f[p];
+    supBtns[p].classList.toggle('ready',!!f&&f.meter>=100);
+    padBtns[p].forEach((b,n)=>b.classList.toggle('locked',!!f&&isMoveLocked(f,PAD_MOVE[n])));
+  }
 }
 if(navigator.maxTouchPoints>0||matchMedia('(pointer: coarse)').matches)enableTouch();
 addEventListener('touchstart',enableTouch,{passive:true});

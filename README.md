@@ -29,6 +29,7 @@ Matches are best of 3 rounds with a 99-second timer.
 - **Block:** hold the direction away from your opponent.
 - **Combos:** a light or heavy hit can be cancelled into a special.
 - **Supers:** need a full power bar. It fills when you hit or get hit.
+- **No spamming:** the same move works at most 3 times in a row. After that, use a different move or wait 5 seconds. The locked move and its countdown show under your health bar.
 - `P` pauses and shows both move lists, `M` mutes and `Esc` goes back.
 
 ### iPad and touch screens
