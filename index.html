@@ -525,7 +525,7 @@ function makeFighter(ch,side){
   return{ch,side,x:side?220:100,y:GROUND,vx:0,vy:0,facing:side?-1:1,w:ch.w,h:ch.h,hp:ch.stats.hp,maxHp:ch.stats.hp,ghost:ch.stats.hp,meter:0,
     state:'idle',t:0,mt:0,move:null,mi:-1,stun:0,flash:0,onGround:true,combo:0,comboT:0,showCombo:0,inv:0,hitDone:false,hitConnected:false,buffer:null,trail:[],guard:false,inp:EMPTY,ai:null,lastMi:-1,streak:0,lastUseT:-9999,lockMsg:0};
 }
-function resetFighter(f){f.x=f.side?220:100;f.y=GROUND;f.vx=f.vy=0;f.facing=f.side?-1:1;f.hp=f.ghost=f.maxHp;f.state='idle';f.move=null;f.stun=0;f.flash=0;f.onGround=true;f.combo=0;f.comboT=0;f.inv=0;f.buffer=null;f.trail=[];f.ai=null;f.lastMi=-1;f.streak=0;f.lastUseT=-9999;f.lockMsg=0;}
+function resetFighter(f){f.x=f.side?220:100;f.y=GROUND;f.vx=f.vy=0;f.facing=f.side?-1:1;f.hp=f.ghost=f.maxHp;f.state='idle';f.move=null;f.stun=0;f.flash=0;f.onGround=true;f.combo=0;f.comboT=0;f.inv=0;f.buffer=null;f.trail=[];f.ai=null;f.lastMi=-1;f.streak=0;f.lastUseT=-9999;f.lockMsg=0;f.use=null;f.countedUse=0;}
 
 const hurtBox=f=>({x:f.x-f.w/2,y:f.y-f.h,w:f.w,h:f.h});
 const ov=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
@@ -552,7 +552,7 @@ function hit(a,d,dmg,o={}){
   d.hp-=real;d.state='hurt';d.move=null;d.stun=o.stun??(12+dmg*.7|0);d.vx=dir*(o.kb??3);
   if(o.lift||!d.onGround){d.vy=-(o.lift||3);d.onGround=false;}
   d.flash=5;d.combo++;d.comboT=60;a.showCombo=d.combo>=2?60:a.showCombo;a.comboN=d.combo;
-  a.hitConnected=true;
+  a.hitConnected=true;countHit(a,o.use||a.use);
   if(!o.sup)a.meter=Math.min(100,a.meter+real*1.3);d.meter=Math.min(100,d.meter+real*.9);
   const big=o.sup||dmg>=9;
   hitstop=Math.max(hitstop,o.sup?7:big?5:3);shake=Math.max(shake,o.sup?6:big?3:1);
@@ -566,14 +566,20 @@ function ko(d,a,dir){
   if(G.phase==='play'){G.phase='ko';G.phaseT=0;slowmo=50;sfx('ko');whiteFlash=6;}
 }
 
-// The same move works 3 times in a row; after that the fighter must use a different move or wait 5 seconds.
-const MAX_REPEAT=3,REPEAT_RESET=300;
+// A move that lands 4 times in a row locks until the fighter uses a different move or 5 seconds pass.
+// Only hits count: whiffs and blocked attacks don't add to the streak.
+const MAX_REPEAT=4,REPEAT_RESET=300;
+function countHit(f,use){
+  if(!use||use.id===f.countedUse)return;f.countedUse=use.id;
+  f.streak=f.lastMi===use.mi&&f.t-f.lastUseT<REPEAT_RESET?f.streak+1:1;f.lastMi=use.mi;f.lastUseT=f.t;
+}
 const isMoveLocked=(f,i)=>f.lastMi===i&&f.streak>=MAX_REPEAT&&f.t-f.lastUseT<REPEAT_RESET;
 function startMove(f,i){
   const m=f.ch.moves[i];
   if(isMoveLocked(f,i)){if(f.lockMsg<=0)sfx('block');f.lockMsg=45;return false;}
   if(m.super&&f.meter<100)return false;
-  f.streak=f.lastMi===i&&f.t-f.lastUseT<REPEAT_RESET?f.streak+1:1;f.lastMi=i;f.lastUseT=f.t;
+  if(i!==f.lastMi){f.lastMi=i;f.streak=0;}
+  f.useId=(f.useId||0)+1;f.use={mi:i,id:f.useId};
   if(m.super){f.meter=0;superFreeze={t:45,f,name:m.name};f.inv=m.st+12;sfx('super');}
   f.state='attack';f.move=m;f.mi=i;f.mt=0;f.hitDone=false;f.hitConnected=false;f.trail=[];f.groupHit=false;
   if(f.onGround)f.vx=0;
@@ -596,7 +602,7 @@ function updateAttack(f,o){
   case 'proj':{
     const cnt=m.count||1;
     for(let k=0;k<cnt;k++)if(mt===st+k*(m.every||0)){
-      projectiles.push({x:f.x+f.facing*(hw+4),y:f.y+m.hy+(cnt>1?((k%2)*6-3):0),vx:f.facing*m.speed,r:m.size,dmg:m.dmg/cnt/(m.phits||1),owner:f,kind:m.kind,color:m.color,core:m.core,life:220,age:0,hits:m.phits||1,tick:0,kb:m.kb||3,lift:m.lift||0,sup:!!m.super});
+      projectiles.push({x:f.x+f.facing*(hw+4),y:f.y+m.hy+(cnt>1?((k%2)*6-3):0),vx:f.facing*m.speed,r:m.size,dmg:m.dmg/cnt/(m.phits||1),owner:f,use:f.use,kind:m.kind,color:m.color,core:m.core,life:220,age:0,hits:m.phits||1,tick:0,kb:m.kb||3,lift:m.lift||0,sup:!!m.super});
       sfx(m.kind==='fire'?'fire':'proj');
     }break;}
   case 'beam':{
@@ -624,10 +630,10 @@ function updateAttack(f,o){
     if(act&&!f.hitDone){const box=frontBox(f,hw-4,m.range,-58,44);if(ov(box,hurtBox(o))){f.hitDone=true;hit(f,o,m.dmg,{kb:m.kb,lift:m.lift,col:m.handOrb});}}
     break;}
   case 'sky':{
-    if(first){const n=m.count||1;for(let k=0;k<n;k++)strikes.push({x:o.x+(k?(k%2?1:-1)*k*16:0),delay:m.warn+k*8,life:16,owner:f,dmg:m.dmg/n,w:m.width||10,color:m.color,done:false,sup:!!m.super});sfx('proj');}
+    if(first){const n=m.count||1;for(let k=0;k<n;k++)strikes.push({x:o.x+(k?(k%2?1:-1)*k*16:0),delay:m.warn+k*8,life:16,owner:f,use:f.use,dmg:m.dmg/n,w:m.width||10,color:m.color,done:false,sup:!!m.super});sfx('proj');}
     break;}
   case 'aoe':{
-    if(first){f.groupHit=false;for(let k=0;k<(m.count||5);k++)for(const s of[-1,1])erupts.push({x:f.x+s*(18+k*22),delay:k*5,life:20,w:18,h:m.height||44,owner:f,dmg:m.dmg,color:m.color,sup:!!m.super});shake=4;}
+    if(first){f.groupHit=false;for(let k=0;k<(m.count||5);k++)for(const s of[-1,1])erupts.push({x:f.x+s*(18+k*22),delay:k*5,life:20,w:18,h:m.height||44,owner:f,use:f.use,dmg:m.dmg,color:m.color,sup:!!m.super});shake=4;}
     break;}
   }
   f.mt++;
@@ -690,7 +696,7 @@ function updateProjectiles(){
     const box={x:p.x-p.r,y:p.y-p.r,w:p.r*2,h:p.r*2};
     if(p.tick>0)p.tick--;
     else if(ov(box,hurtBox(t))&&t.state!=='ko'&&t.inv<=0){
-      hit(p.owner,t,p.dmg,{kb:p.hits>1?.1:p.kb,lift:p.hits>1?0:p.lift,src:p.x-p.vx*4,sup:p.sup,stun:p.hits>1?16:undefined,col:p.color});
+      hit(p.owner,t,p.dmg,{kb:p.hits>1?.1:p.kb,lift:p.hits>1?0:p.lift,src:p.x-p.vx*4,sup:p.sup,stun:p.hits>1?16:undefined,col:p.color,use:p.use});
       p.hits--;p.tick=6;if(p.hits>0)p.vx*=.15;
       if(p.hits<=0){p.dead=true;burst(p.x,p.y,p.color,12,3);}
     }
@@ -707,14 +713,14 @@ function updateProjectiles(){
   for(const s of strikes){
     if(s.delay>0){s.delay--;if(s.delay===0){sfx('thunder');whiteFlash=Math.max(whiteFlash,s.sup?6:3);shake=Math.max(shake,s.sup?6:3);}continue;}
     s.life--;const t=other(s.owner);
-    if(!s.done&&s.life>6&&ov({x:s.x-s.w/2,y:0,w:s.w,h:GROUND},hurtBox(t))){s.done=true;hit(s.owner,t,s.dmg,{kb:3,lift:6,src:s.x,sup:s.sup,col:s.color});}
+    if(!s.done&&s.life>6&&ov({x:s.x-s.w/2,y:0,w:s.w,h:GROUND},hurtBox(t))){s.done=true;hit(s.owner,t,s.dmg,{kb:3,lift:6,src:s.x,sup:s.sup,col:s.color,use:s.use});}
     if(s.life%3===0)burst(s.x,GROUND-2,s.color,3,2);
   }
   strikes=strikes.filter(s=>s.life>0);
   for(const e of erupts){
     if(e.delay>0){e.delay--;continue;}
     e.life--;const t=other(e.owner);
-    if(!e.owner.groupHit&&e.life>8&&ov({x:e.x-e.w/2,y:GROUND-e.h,w:e.w,h:e.h},hurtBox(t))){e.owner.groupHit=true;hit(e.owner,t,e.dmg,{kb:4,lift:7,src:e.owner.x,sup:e.sup,col:'#ffd23a'});}
+    if(!e.owner.groupHit&&e.life>8&&ov({x:e.x-e.w/2,y:GROUND-e.h,w:e.w,h:e.h},hurtBox(t))){e.owner.groupHit=true;hit(e.owner,t,e.dmg,{kb:4,lift:7,src:e.owner.x,sup:e.sup,col:'#ffd23a',use:e.use});}
     if(e.life===19){sfx('fire');}
     if(e.life%2===0)parts.push({x:e.x+(Math.random()-.5)*e.w,y:GROUND-Math.random()*e.h,vx:0,vy:-1.5,life:10,c:Math.random()<.5?'#ffd23a':'#ff5a1a',s:2,g:0});
   }
