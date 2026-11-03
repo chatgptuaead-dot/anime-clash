@@ -8,7 +8,7 @@ You can also open `index.html` in a browser. Either way, click the game once so 
 
 ## Modes
 
-- **1 – VS CPU:** you pick your fighter, then pick the CPU's.
+- **1 – VS CPU:** choose a difficulty (Easy, Medium, Hard or Super Hard), then pick your fighter and the CPU's.
 - **2 – 2 Players:** two players share one keyboard.
 - **3 – Online:** play against someone on another laptop or iPad. Host a room and share its 4-letter code, or join an open room from the lobby.
 
@@ -24,9 +24,11 @@ Matches are best of 3 rounds with a 99-second timer.
 | Super | `3` | `8` (or Numpad 3) |
 | Light | `4` | `9` (or Numpad 4) |
 | Heavy | `5` | `0` (or Numpad 5) |
+| Throw | `4` + `5` | `9` + `0` |
 | Lock in fighter | `1`, `Enter` or `Space` | `6` or `Numpad 1` |
 
 - **Block:** hold the direction away from your opponent.
+- **Throw:** press light + heavy together (`4`+`5`, or `9`+`0` for P2) right next to your opponent. Throws can't be blocked, so they beat a player who keeps blocking. To break a throw, press light + heavy as soon as you're grabbed.
 - **Combos:** a light or heavy hit can be cancelled into a special.
 - **Supers:** need a full power bar. It fills when you hit or get hit.
 - **No teleport spamming:** if Goku's Instant Transmission or Ichigo's Flash Step hits 4 times in a row, it locks. Use a different move or wait 5 seconds to unlock it. Misses and blocked attacks don't count. The locked move and its countdown show under your health bar.
