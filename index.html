@@ -1011,7 +1011,7 @@ function drawFighter(f){
   if(superFreeze&&superFreeze.f===f){const fl=G.t%4<2;alpha(.5,()=>{pc(f.x,f.y-f.h/2,f.h/2+6+(fl?2:0),m&&m.color||'#ffe84a');});}
   if(f.inv>0&&f.state==='attack'&&f.move&&f.move.super&&G.t%2)drawSprite(f.ch,f.x,f.y,f.facing,P,{tint:'#ffffff',alpha:.6});
   drawSprite(f.ch,f.x,f.y,f.facing,P);
-  if(f.lockMsg>0)text('TRY ANOTHER MOVE',f.x,f.y-f.h-(f.ch.body==='human'?30:22),'#ffb07a',1,'center');
+  if(f.lockMsg>0)text('STOP SPAMMING!',f.x,f.y-f.h-(f.ch.body==='human'?30:22),'#ffb07a',1,'center');
   if(!m)return;
   const mt=f.mt,act=mt>=m.st&&mt<m.st+m.ac,hp=handPos(f);
   if(m.handOrb&&mt<m.st+m.ac){const r=Math.min(5,1+mt/3)+(G.t%4<2?1:0);const y=m.type==='uppercut'?f.y-54:hp.y;const x=m.type==='uppercut'?f.x+f.facing*7:hp.x;
