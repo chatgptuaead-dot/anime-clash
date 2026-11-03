@@ -49,7 +49,7 @@ Online play needs the small server in `server.js`, which hosts rooms and passes 
 
 1. In Render, choose **New → Blueprint** and connect this repository. Render reads `render.yaml` and creates a free web service named `anime-clash`.
 2. When it finishes, open the service URL (for example `https://anime-clash.onrender.com`). That page is the full game with online play built in.
-3. The GitHub Pages copy connects to `wss://anime-clash-nslt.onrender.com`. If you move the server, change `DEFAULT_SERVER` near the top of the online section in `index.html`, or open the Pages link with `?server=wss://your-service.onrender.com`.
+3. The GitHub Pages copy connects to `wss://anime-clash-9hbh.onrender.com`. If you move the server, change `DEFAULT_SERVER` near the top of the online section in `index.html`, or open the Pages link with `?server=wss://your-service.onrender.com`.
 
 Pick the Render region closest to your players. Every input travels from one player to the server and on to the other, so a far-away server adds input delay. The game measures that lag in the room and sets the input delay to match, and the character select screen shows it as **LAG**.
 

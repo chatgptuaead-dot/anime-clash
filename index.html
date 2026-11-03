@@ -744,7 +744,7 @@ function aiInput(me,o){
 /* ---------- online multiplayer ---------- */
 // Both players run the same deterministic fight. Each side sends only its inputs, scheduled
 // NET.D frames ahead, and a frame is simulated once both inputs for it have arrived.
-const DEFAULT_SERVER='wss://anime-clash-nslt.onrender.com';
+const DEFAULT_SERVER='wss://anime-clash-9hbh.onrender.com';
 const NET={ws:null,status:'off',side:0,code:'',pub:true,rooms:[],D:4,frame:0,gen:0,local:{},remote:{},remoteMax:-1,pend:0,
   stage:0,remoteCur:0,rtts:[],rsums:{},stalled:0,remoteLock:false,rematch:[false,false],sums:{},desync:false,retry:0,msg:'',inRoom:false,peer:false};
 function serverURL(){
