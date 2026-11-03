@@ -566,14 +566,16 @@ function ko(d,a,dir){
   if(G.phase==='play'){G.phase='ko';G.phaseT=0;slowmo=50;sfx('ko');whiteFlash=6;}
 }
 
-// A move that lands 4 times in a row locks until the fighter uses a different move or 5 seconds pass.
+// Teleport strikes (Goku's Instant Transmission, Ichigo's Flash Step) lock after landing 4 times in a row,
+// until the fighter uses a different move or 5 seconds pass.
 // Only hits count: whiffs and blocked attacks don't add to the streak.
 const MAX_REPEAT=4,REPEAT_RESET=300;
 function countHit(f,use){
   if(!use||use.id===f.countedUse)return;f.countedUse=use.id;
   f.streak=f.lastMi===use.mi&&f.t-f.lastUseT<REPEAT_RESET?f.streak+1:1;f.lastMi=use.mi;f.lastUseT=f.t;
 }
-const isMoveLocked=(f,i)=>f.lastMi===i&&f.streak>=MAX_REPEAT&&f.t-f.lastUseT<REPEAT_RESET;
+const isRepeatLimited=(f,i)=>i>=0&&f.ch.moves[i].type==='teleport';
+const isMoveLocked=(f,i)=>isRepeatLimited(f,i)&&f.lastMi===i&&f.streak>=MAX_REPEAT&&f.t-f.lastUseT<REPEAT_RESET;
 function startMove(f,i){
   const m=f.ch.moves[i];
   if(isMoveLocked(f,i)){if(f.lockMsg<=0)sfx('block');f.lockMsg=45;return false;}

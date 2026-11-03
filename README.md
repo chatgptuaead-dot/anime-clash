@@ -29,7 +29,7 @@ Matches are best of 3 rounds with a 99-second timer.
 - **Block:** hold the direction away from your opponent.
 - **Combos:** a light or heavy hit can be cancelled into a special.
 - **Supers:** need a full power bar. It fills when you hit or get hit.
-- **No spamming:** if the same move hits 4 times in a row, it locks. Use a different move or wait 5 seconds to unlock it. Misses and blocked attacks don't count. The locked move and its countdown show under your health bar.
+- **No teleport spamming:** if Goku's Instant Transmission or Ichigo's Flash Step hits 4 times in a row, it locks. Use a different move or wait 5 seconds to unlock it. Misses and blocked attacks don't count. The locked move and its countdown show under your health bar.
 - `P` pauses and shows both move lists, `M` mutes and `Esc` goes back.
 
 ### iPad and touch screens
