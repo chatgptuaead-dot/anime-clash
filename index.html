@@ -744,9 +744,9 @@ function aiInput(me,o){
 /* ---------- online multiplayer ---------- */
 // Both players run the same deterministic fight. Each side sends only its inputs, scheduled
 // NET.D frames ahead, and a frame is simulated once both inputs for it have arrived.
-const DEFAULT_SERVER='wss://anime-clash.onrender.com';
+const DEFAULT_SERVER='wss://anime-clash-nslt.onrender.com';
 const NET={ws:null,status:'off',side:0,code:'',pub:true,rooms:[],D:4,frame:0,gen:0,local:{},remote:{},remoteMax:-1,pend:0,
-  stage:0,remoteCur:0,rsums:{},stalled:0,remoteLock:false,rematch:[false,false],sums:{},desync:false,retry:0,msg:'',inRoom:false,peer:false};
+  stage:0,remoteCur:0,rtts:[],rsums:{},stalled:0,remoteLock:false,rematch:[false,false],sums:{},desync:false,retry:0,msg:'',inRoom:false,peer:false};
 function serverURL(){
   try{const q=new URLSearchParams(location.search).get('server');if(q)return q;}catch(_){}
   if(/^https?:$/.test(location.protocol)&&!/github\.io$/.test(location.hostname)&&location.host)return(location.protocol==='https:'?'wss://':'ws://')+location.host;
@@ -773,8 +773,8 @@ function goOnline(msg){G.mode='online';G.screen='online';NET.msg=msg||'';netConn
 function netMsg(m){
   switch(m.t){
   case 'lobby':NET.rooms=m.rooms||[];uiLobby();break;
-  case 'created':NET.code=m.code;NET.side=0;NET.inRoom=true;NET.peer=false;NET.msg='';uiOnline();break;
-  case 'joined':NET.code=m.code;NET.side=1;NET.inRoom=true;NET.peer=true;NET.msg='';onlineSelect();break;
+  case 'created':NET.rtts=[];NET.code=m.code;NET.side=0;NET.inRoom=true;NET.peer=false;NET.msg='';uiOnline();break;
+  case 'joined':NET.rtts=[];NET.code=m.code;NET.side=1;NET.inRoom=true;NET.peer=true;NET.msg='';onlineSelect();break;
   case 'peer':NET.peer=true;sfx('confirm');onlineSelect();break;
   case 'peerLeft':NET.inRoom=false;NET.peer=false;NET.code='';G.mode='online';G.screen='online';NET.msg='Your opponent left the match.';uiOnline();break;
   case 'err':NET.msg=m.msg;if(G.screen==='online')uiOnline();break;
@@ -787,7 +787,9 @@ function netGame(d){
   case 'i':NET.remote[d.f]=d.b;if(d.f>NET.remoteMax)NET.remoteMax=d.f;break;
   case 'cur':NET.remoteCur=d.c;if(G.sel)G.sel.c[1-NET.side]=d.c;break;
   case 'lock':NET.remoteLock=d.l;NET.remoteCur=d.c;if(G.sel){G.sel.c[1-NET.side]=d.c;G.sel.done[1-NET.side]=d.l;}if(d.l)sfx('confirm');break;
-  case 'start':beginOnlineMatch(d.stage,d.c);break;
+  case 'start':beginOnlineMatch(d.stage,d.c,d.D);break;
+  case 'png':relay({t:'pon',ts:d.ts});break;
+  case 'pon':NET.rtts.push(performance.now()-d.ts);if(NET.rtts.length>8)NET.rtts.shift();break;
   case 'rematch':NET.rematch[1-NET.side]=true;break;
   case 'reselect':onlineSelect();break;
   case 'sum':{NET.rsums[d.f]=d.h;const mine=NET.sums[d.f];if(mine!=null&&mine!==d.h)NET.desync=true;break;}
@@ -801,7 +803,7 @@ function onlineSelect(){
 }
 function stepOnlineSelect(){
   const S=G.sel,me=NET.side,maps=[MAP.p1,MAP.p2];
-  if(S.go){if(--S.go===0&&me===0){const stage=Math.random()*STAGES.length|0,c=[...S.c];relay({t:'start',stage,c});beginOnlineMatch(stage,c);}return;}
+  if(S.go){if(--S.go===0&&me===0){const stage=Math.random()*STAGES.length|0,c=[...S.c];const D=calcDelay();relay({t:'start',stage,c,D});beginOnlineMatch(stage,c,D);}return;}
   if(pressed.Escape){if(S.done[me]){S.done[me]=false;relay({t:'lock',c:S.c[me],l:false});}else{netLeave();goOnline();}return;}
   if(!S.done[me]){
     let c=S.c[me];
@@ -811,8 +813,11 @@ function stepOnlineSelect(){
   }
   if(S.done[0]&&S.done[1]&&me===0)S.go=30;
 }
-function beginOnlineMatch(stage,c){
-  NET.stage=stage;G.sel={c:[...c],done:[true,true],go:0};G.last=[c[NET.side],c[1-NET.side]];
+function pingMs(){if(!NET.rtts.length)return null;const a=[...NET.rtts].sort((x,y)=>x-y);return a[a.length>>1]/2;}
+// input delay covers one trip from this player to the rival through the server, plus a frame of slack
+function calcDelay(){const ms=pingMs();return ms==null?8:Math.max(3,Math.min(20,Math.ceil(ms/(1000/60))+1));}
+function beginOnlineMatch(stage,c,D){
+  NET.D=D||8;NET.stage=stage;G.sel={c:[...c],done:[true,true],go:0};G.last=[c[NET.side],c[1-NET.side]];
   NET.frame=0;NET.gen=NET.D-1;NET.local={};NET.remote={};NET.remoteMax=NET.D-1;NET.pend=0;NET.sums={};NET.rsums={};NET.desync=false;NET.stalled=0;NET.rematch=[false,false];
   for(let f=0;f<NET.D;f++){NET.local[f]=0;NET.remote[f]=0;}
   G.screen='vs';G.vsT=0;G.leaveAsk=0;
@@ -848,7 +853,7 @@ function stepOnlineResult(){
   const me=NET.side;
   if(!NET.rematch[me]&&(pressed.Enter||pressed.Digit1||pressed.Digit6||pressed.Numpad1||pressed.Space)){NET.rematch[me]=true;relay({t:'rematch'});sfx('confirm');}
   else if(pressed.Escape){relay({t:'reselect'});onlineSelect();return;}
-  if(NET.rematch[0]&&NET.rematch[1]&&me===0){NET.rematch=[false,false];const stage=Math.random()*STAGES.length|0,c=[...G.sel.c];relay({t:'start',stage,c});beginOnlineMatch(stage,c);}
+  if(NET.rematch[0]&&NET.rematch[1]&&me===0){NET.rematch=[false,false];const stage=Math.random()*STAGES.length|0,c=[...G.sel.c];const D=calcDelay();relay({t:'start',stage,c,D});beginOnlineMatch(stage,c,D);}
 }
 function stepOnlineMenu(){if(pressed.Escape&&document.activeElement!==oCode){netLeave();G.screen='title';uiOnline();}}
 
@@ -889,6 +894,7 @@ document.getElementById('ocancel').onclick=()=>{netLeave();NET.msg='';uiOnline()
 document.getElementById('oback').onclick=()=>{netLeave();G.screen='title';uiOnline();};
 document.getElementById('ocopy').onclick=async e=>{try{await navigator.clipboard.writeText(NET.code);e.target.textContent='COPIED';}catch(_){const r=document.createRange();r.selectNodeContents(oBig);const s=getSelection();s.removeAllRanges();s.addRange(r);}setTimeout(()=>{e.target.textContent='COPY CODE';},1500);};
 setInterval(()=>{if(G.screen==='online')uiLobby();},5000);
+setInterval(()=>{if(NET.inRoom&&NET.peer)relay({t:'png',ts:performance.now()});},1000);
 
 /* ---------- screens: logic ---------- */
 function startMatch(){
@@ -1144,7 +1150,7 @@ function drawSelect(){
   ctx.fillStyle='#120e26';ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#1a1536';for(let i=-H;i<W;i+=16){const o=(G.t>>1)%16;for(let y=0;y<H;y+=2)ctx.fillRect(i+o+y,y,6,2);}
   text('CHOOSE YOUR FIGHTER',160,4,'#ffe84a',2,'center');
-  if(G.mode==='online')text('ROOM '+NET.code,3,4,'#8f88b8',1,'left',null);
+  if(G.mode==='online'){text('ROOM '+NET.code,3,4,'#8f88b8',1,'left',null);const pm=pingMs();if(pm!=null)text('LAG '+Math.round(pm)+'MS',317,4,pm<90?'#7ee08a':pm<180?'#ffd27a':'#ff8a8a',1,'right',null);}
   const S=G.sel;
   ROSTER.forEach((ch,i)=>{
     const cx=80+(i%5)*32+1,cy=20+(i/5|0)*32;

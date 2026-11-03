@@ -37,7 +37,7 @@ On a touch screen the game shows on-screen controls: a stick on the left to move
 
 ## Online multiplayer
 
-Online play needs the small server in `server.js`, which hosts rooms and passes each player's inputs to the other. Both devices run the same fight in step, so only key presses travel over the network. A short input delay (4 frames, about 67 ms) hides normal network lag.
+Online play needs the small server in `server.js`, which hosts rooms and passes each player's inputs to the other. Both devices run the same fight in step, so only key presses travel over the network. The game measures the lag between the two players and adds a matching input delay, so the fight stays smooth.
 
 - **Host:** choose **Online**, then **Create room**. Leave "List it in the lobby" ticked to make the room public, or untick it for a code-only room.
 - **Join:** type the 4-letter code and press **Join**, or press **Join** next to a room in the lobby.
@@ -49,7 +49,9 @@ Online play needs the small server in `server.js`, which hosts rooms and passes 
 
 1. In Render, choose **New → Blueprint** and connect this repository. Render reads `render.yaml` and creates a free web service named `anime-clash`.
 2. When it finishes, open the service URL (for example `https://anime-clash.onrender.com`). That page is the full game with online play built in.
-3. The GitHub Pages copy connects to `wss://anime-clash.onrender.com` by default. If Render gives your service a different URL, change `DEFAULT_SERVER` near the top of the online section in `index.html`, or open the Pages link with `?server=wss://your-service.onrender.com`.
+3. The GitHub Pages copy connects to `wss://anime-clash-nslt.onrender.com`. If you move the server, change `DEFAULT_SERVER` near the top of the online section in `index.html`, or open the Pages link with `?server=wss://your-service.onrender.com`.
+
+Pick the Render region closest to your players. Every input travels from one player to the server and on to the other, so a far-away server adds input delay. The game measures that lag in the room and sets the input delay to match, and the character select screen shows it as **LAG**.
 
 On Render's free plan the server sleeps after about 15 minutes without visitors. The first player to connect after that waits up to a minute while it wakes up, and the online menu says so.
 
