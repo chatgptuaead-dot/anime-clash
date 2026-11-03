@@ -30,6 +30,10 @@ Matches are best of 3 rounds with a 99-second timer.
 - **Supers:** need a full power bar. It fills when you hit or get hit.
 - `P` pauses and shows both move lists, `M` mutes and `Esc` goes back.
 
+### iPad and touch screens
+
+On a touch screen the game shows on-screen controls: a stick on the left to move (push up to jump) and five numbered attack buttons on the right, matching the keyboard numbers. Tap **VS CPU** or **2 PLAYERS** on the title screen, and button **1** to lock in a fighter. **II** pauses or goes back. In 2-player mode each player gets their own stick and buttons.
+
 ## Fighters
 
 | Fighter | Series | Signature | Super |
